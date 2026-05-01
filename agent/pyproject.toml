@@ -1,0 +1,22 @@
+[project]
+name = "data-analyst-agent"
+version = "0.1.0"
+description = "ADK Data Analysis Agent with chart generation"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "python-dotenv",
+    "pydantic",
+    "google-adk",
+    "google-genai",
+    "ag-ui-adk",
+    "toolbox-core",
+    "langfuse",
+    "openinference-instrumentation-google-adk",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp-proto-http",
+    "pymongo",
+    "mysql-connector-python",
+    "litellm",
+]
