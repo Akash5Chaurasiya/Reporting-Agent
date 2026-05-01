@@ -1,0 +1,1177 @@
+{
+    "calling_cdr_incoming": {
+        "collection": "calling_cdr",
+        "description": "Get incoming calls with address book and agent details. Uses current date if no dates provided.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "call_direction": "INCOMING",
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "call_direction": "{{call_direction}}",
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "campaign_name": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "final_status": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "customer_ringing_duration": 1,
+                    "duration": 1,
+                    "recording_path": 1,
+                    "disposition_form_name": 1,
+                    "disconnected_by": 1,
+                    "remarks": 1,
+                    "ivr_duration": 1,
+                    "after_call_wrapup_time": 1,
+                    "conferenceDuration": 1,
+                    "on_call_hold_time": 1,
+                    "hold_time_detail": 1,
+                    "mute_duration": 1,
+                    "mute_time_detail": 1,
+                    "agent_ringing_duration": 1,
+                    "customer_hangup_cause": 1,
+                    "agent_hangup_cause": 1,
+                    "queue_wait_duration": 1,
+                    "final_dtmf": 1
+                }
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Campaign Name": "$campaign_name",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Call Status": "$final_status",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Customer Ringing Duration": "$customer_ringing_duration",
+                    "Call Duration": "$duration",
+                    "Recording": "$recording_path",
+                    "Disposition": "$disposition_form_name",
+                    "Disconnected By": "$disconnected_by",
+                    "Remark": "$remarks",
+                    "IVR Duration": "$ivr_duration",
+                    "Wrapup Time": "$after_call_wrapup_time",
+                    "Conference Duration": "$conferenceDuration",
+                    "Total Hold Time": "$on_call_hold_time",
+                    "Hold Time Detail": "$hold_time_detail",
+                    "Total Mute Time": "$mute_duration",
+                    "Mute Time Detail": "$mute_time_detail",
+                    "Agent Ringing Duration": "$agent_ringing_duration",
+                    "Customer Hangup Cause": "$customer_hangup_cause",
+                    "Agent Hangup Cause": "$agent_hangup_cause",
+                    "Queue Wait Time": "$queue_wait_duration",
+                    "DTMFS": "$final_dtmf"
+                }
+            }
+        ]
+    },
+    "calling_cdr_outgoing": {
+        "collection": "calling_cdr",
+        "description": "Get outgoing calls with address book and agent details. Uses current date if no dates provided.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "call_direction": "OUTGOING",
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "call_direction": "{{call_direction}}",
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "campaign_name": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "final_status": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "customer_ringing_duration": 1,
+                    "duration": 1,
+                    "recording_path": 1,
+                    "disposition_form_name": 1,
+                    "disconnected_by": 1,
+                    "remarks": 1,
+                    "ivr_duration": 1,
+                    "after_call_wrapup_time": 1,
+                    "conferenceDuration": 1,
+                    "on_call_hold_time": 1,
+                    "hold_time_detail": 1,
+                    "mute_duration": 1,
+                    "mute_time_detail": 1,
+                    "agent_ringing_duration": 1,
+                    "customer_hangup_cause": 1,
+                    "agent_hangup_cause": 1,
+                    "queue_wait_duration": 1,
+                    "final_dtmf": 1
+                }
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Campaign Name": "$campaign_name",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Call Status": "$final_status",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Customer Ringing Duration": "$customer_ringing_duration",
+                    "Call Duration": "$duration",
+                    "Recording": "$recording_path",
+                    "Disposition": "$disposition_form_name",
+                    "Disconnected By": "$disconnected_by",
+                    "Remark": "$remarks",
+                    "IVR Duration": "$ivr_duration",
+                    "Wrapup Time": "$after_call_wrapup_time",
+                    "Conference Duration": "$conferenceDuration",
+                    "Total Hold Time": "$on_call_hold_time",
+                    "Hold Time Detail": "$hold_time_detail",
+                    "Total Mute Time": "$mute_duration",
+                    "Mute Time Detail": "$mute_time_detail",
+                    "Agent Ringing Duration": "$agent_ringing_duration",
+                    "Customer Hangup Cause": "$customer_hangup_cause",
+                    "Agent Hangup Cause": "$agent_hangup_cause",
+                    "Queue Wait Time": "$queue_wait_duration",
+                    "DTMFS": "$final_dtmf"
+                }
+            }
+        ]
+    },
+    "manual_outbound_calls": {
+        "collection": "calling_cdr",
+        "description": "Get manual outbound calls (call_mode=3) with address book and agent details. Uses current date if no dates provided.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "call_mode": 3,
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "call_mode": "{{call_mode}}",
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "campaign_name": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "final_status": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "agent_ringing_duration": 1,
+                    "customer_ringing_duration": 1,
+                    "on_call_hold_time": 1,
+                    "after_call_wrapup_time": 1,
+                    "duration": 1,
+                    "recording_path": 1,
+                    "disposition_form_name": 1,
+                    "disconnected_by": 1,
+                    "remarks": 1
+                }
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Campaign Name": "$campaign_name",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Call Status": "$final_status",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Agent Ring Time": "$agent_ringing_duration",
+                    "Customer Ringing Time": "$customer_ringing_duration",
+                    "Hold Time": "$on_call_hold_time",
+                    "Wrapup Time": "$after_call_wrapup_time",
+                    "Call Duration": "$duration",
+                    "Recording": "$recording_path",
+                    "Disposition": "$disposition_form_name",
+                    "Disconnected By": "$disconnected_by",
+                    "Remark": "$remarks"
+                }
+            }
+        ]
+    },
+    "failed_calls": {
+        "collection": "calling_cdr",
+        "description": "ONLY use when user asks for 'failed calls' or 'not patched calls'. These are calls with status 'notpatched'. For 'missed calls' use 'missed_calls' query instead.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "final_status": "notpatched",
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "final_status": "{{final_status}}",
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "call_direction": 1,
+                    "campaign_name": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "queue_wait_duration": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "voicemail_duration": 1,
+                    "voicemail_recording_path": 1,
+                    "agent_hangup_cause": 1,
+                    "customer_hangup_cause": 1,
+                    "remarks": 1
+                }
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Call Type": "$call_direction",
+                    "Campaign Name": "$campaign_name",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Queue Wait Time(Sec)": "$queue_wait_duration",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Voice Mail Duration": "$voicemail_duration",
+                    "Voicemail Recording": "$voicemail_recording_path",
+                    "Agent Hangup Cause": "$agent_hangup_cause",
+                    "Customer Hangup Cause": "$customer_hangup_cause",
+                    "Remark": "$remarks"
+                }
+            }
+        ]
+    },
+    "abandoned_calls": {
+        "collection": "calling_cdr",
+        "description": "ONLY use when user explicitly asks for 'abandoned calls report'. This is a generic abandoned calls query. For 'missed calls' use 'missed_calls' query instead.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "final_status": "abandoned",
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "final_status": "{{final_status}}",
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "call_direction": 1,
+                    "campaign_name": 1,
+                    "campaign_type": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "final_status": 1,
+                    "queue_wait_duration": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "voicemail_duration": 1,
+                    "voicemail_recording_path": 1,
+                    "agent_hangup_cause": 1,
+                    "customer_hangup_cause": 1,
+                    "customer_ringing_duration": 1,
+                    "remarks": 1
+                }
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Call Type": "$call_direction",
+                    "Campaign Name": "$campaign_name",
+                    "Campaign Type": "$campaign_type",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Call Status": "$final_status",
+                    "Queue Wait Time(Sec)": "$queue_wait_duration",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Voice Mail Duration": "$voicemail_duration",
+                    "Voicemail Recording": "$voicemail_recording_path",
+                    "Agent Hangup Cause": "$agent_hangup_cause",
+                    "Customer Hangup Cause": "$customer_hangup_cause",
+                    "Customer Ringing Duration": "$customer_ringing_duration",
+                    "Remark": "$remarks"
+                }
+            }
+        ]
+    },
+    "auto_call_distribution": {
+        "collection": "calling_cdr",
+        "description": "Get auto call distribution report (power, progressive, predictive, preview dialers). Uses current date if no dates provided.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "campaign_type": {
+                        "$in": ["power_dialer", "progressive_dialer", "predictive_dialer", "preview_auto"]
+                    },
+                    "final_status": {"$nin": ["na"]},
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "campaign_name": 1,
+                    "campaign_type": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "queue_wait_duration": 1,
+                    "final_status": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "duration": 1,
+                    "recording_path": 1,
+                    "disposition_form_name": 1,
+                    "disconnected_by": 1,
+                    "transferStatus": 1,
+                    "conferenceStatus": 1,
+                    "on_call_hold_time": 1,
+                    "mute_duration": 1,
+                    "remarks": 1
+                }
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Campaign Name": "$campaign_name",
+                    "Campaign Type": "$campaign_type",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Queue Wait Time(Sec)": "$queue_wait_duration",
+                    "Call Status": "$final_status",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Call Duration": "$duration",
+                    "Recording": "$recording_path",
+                    "Disposition": "$disposition_form_name",
+                    "Disconnected By": "$disconnected_by",
+                    "Transfer Status": "$transferStatus",
+                    "Conference Status": "$conferenceStatus",
+                    "Hold Time": "$on_call_hold_time",
+                    "Mute Time": "$mute_duration",
+                    "Remark": "$remarks"
+                }
+            }
+        ]
+    },
+    "transfer_conference_calls": {
+        "collection": "calling_cdr",
+        "description": "Get transfer and conference calls report. Uses current date if no dates provided.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "final_status": {"$nin": ["na"]},
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    },
+                    "$or": [
+                        {"transferStatus": "1"},
+                        {"conferenceStatus": "1"}
+                    ]
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "campaign_name": 1,
+                    "campaign_type": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "call_direction": 1,
+                    "final_status": 1,
+                    "transferStatus": 1,
+                    "conferenceStatus": 1,
+                    "queue_wait_duration": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "duration": 1,
+                    "mute_duration": 1,
+                    "on_call_hold_time": 1,
+                    "remarks": 1
+                }
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Campaign Name": "$campaign_name",
+                    "Campaign Type": "$campaign_type",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Call Type": "$call_direction",
+                    "Call Status": "$final_status",
+                    "Category": {
+                        "$cond": {
+                            "if": {"$eq": ["$transferStatus", "1"]},
+                            "then": "Transferred",
+                            "else": {
+                                "$cond": {
+                                    "if": {"$eq": ["$conferenceStatus", "1"]},
+                                    "then": "Conference",
+                                    "else": ""
+                                }
+                            }
+                        }
+                    },
+                    "Queue Wait Time(Sec)": "$queue_wait_duration",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Total call duration": "$duration",
+                    "Mute Time": "$mute_duration",
+                    "Hold Time": "$on_call_hold_time",
+                    "Remark": "$remarks"
+                }
+            }
+        ]
+    },
+    "callback_followup": {
+        "collection": "customer_followup",
+        "description": "Get callback/follow-up report with reminder details. Uses current date if no dates provided.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "reminder_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lt": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "session_id": 1,
+                    "sme_id": 1,
+                    "customer_number": 1,
+                    "customer_name": 1,
+                    "agent_name": 1,
+                    "agent_number": 1,
+                    "insert_date_time": 1,
+                    "reminder_date_time": 1
+                }
+            },
+            {
+                "$sort": {"reminder_date_time": 1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "calling_cdr",
+                    "let": {
+                        "cc_session_id": "$session_id",
+                        "smeId": "$sme_id"
+                    },
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "$expr": {
+                                    "$and": [
+                                        {"$eq": ["$session_id", "$$cc_session_id"]},
+                                        {"$eq": ["$sme_id", "$$smeId"]}
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "$project": {
+                                "campaign_name": 1,
+                                "campaign_type": 1,
+                                "queue_name": 1,
+                                "call_flow_name": 1,
+                                "start_date_time": 1,
+                                "end_date_time": 1,
+                                "final_status": 1,
+                                "disposition_form_name": 1,
+                                "disconnected_by": 1,
+                                "agent_hangup_cause": 1,
+                                "remarks": 1
+                            }
+                        }
+                    ],
+                    "as": "calling_cdr"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$calling_cdr",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$calling_cdr.start_date_time",
+                    "Session Id": "$session_id",
+                    "Campaign Name": "$calling_cdr.campaign_name",
+                    "Queue Name": "$calling_cdr.queue_name",
+                    "Campaign Type": "$calling_cdr.campaign_type",
+                    "Call Flow": "$calling_cdr.call_flow_name",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Call Back Set Time": "$insert_date_time",
+                    "Scheduled Call Back Time": "$reminder_date_time",
+                    "Status": "$calling_cdr.final_status",
+                    "Call Start Time": "$calling_cdr.start_date_time",
+                    "Call End Time": "$calling_cdr.end_date_time",
+                    "Disposition": "$calling_cdr.disposition_form_name",
+                    "Disconnected By": "$calling_cdr.disconnected_by",
+                    "Hang up Cause": "$calling_cdr.agent_hangup_cause",
+                    "Remark": "$calling_cdr.remarks"
+                }
+            }
+        ]
+    },
+    "list_wise_dialing_status": {
+        "collection": "calling_cdr",
+        "description": "Get list wise dialing status report with file and campaign details. Filters by campaign, sme_id, and date range.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "campaign_ids": []
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "campaign_id": {
+                        "$in": "{{campaign_ids}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "file_id": 1,
+                    "file_name": 1,
+                    "campaign_name": 1,
+                    "campaign_id": 1,
+                    "final_status": 1,
+                    "retry_count": 1
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "file_id": "$file_id",
+                        "final_status": {"$ifNull": ["$final_status", "Unknown"]}
+                    },
+                    "count": {"$sum": 1},
+                    "file_name": {"$first": "$file_name"},
+                    "campaign_name": {"$first": "$campaign_name"},
+                    "campaign_id": {"$first": "$campaign_id"},
+                    "retry_count": {"$sum": "$retry_count"}
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$_id.file_id",
+                    "file_name": {"$first": "$file_name"},
+                    "campaign_name": {"$first": "$campaign_name"},
+                    "campaign_id": {"$first": "$campaign_id"},
+                    "statuses": {
+                        "$push": {"k": "$_id.final_status", "v": "$count"}
+                    },
+                    "total_count": {"$sum": "$count"},
+                    "total_retry_count": {"$sum": "$retry_count"}
+                }
+            },
+            {
+                "$addFields": {
+                    "statuses": {"$arrayToObject": "$statuses"},
+                    "dialable_count": 0
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "tbl_dialer_profile_files",
+                    "localField": "_id",
+                    "foreignField": "_id",
+                    "pipeline": [
+                        {
+                            "$project": {
+                                "status": 1,
+                                "insert_date_time": 1,
+                                "total_count": 1,
+                                "invalid_count": 1,
+                                "duplicate_count": 1,
+                                "dnc_count": 1,
+                                "dnd_count": 1,
+                                "valid_count": 1,
+                                "executed": 1,
+                                "pending_count": 1
+                            }
+                        }
+                    ],
+                    "as": "profile_file"
+                }
+            },
+            {
+                "$addFields": {
+                    "table_dialer_profile_files_status": {"$ifNull": [{"$arrayElemAt": ["$profile_file.status", 0]}, null]},
+                    "table_dialer_profile_files_insert_date_time": {"$ifNull": [{"$arrayElemAt": ["$profile_file.insert_date_time", 0]}, null]},
+                    "total_uploaded_count": {"$ifNull": [{"$arrayElemAt": ["$profile_file.total_count", 0]}, 0]},
+                    "insert_date_time": {"$ifNull": [{"$arrayElemAt": ["$profile_file.insert_date_time", 0]}, null]},
+                    "invalid_count": {"$ifNull": [{"$arrayElemAt": ["$profile_file.invalid_count", 0]}, null]},
+                    "duplicate_count": {"$ifNull": [{"$arrayElemAt": ["$profile_file.duplicate_count", 0]}, null]},
+                    "dnc_count": {"$ifNull": [{"$arrayElemAt": ["$profile_file.dnc_count", 0]}, null]},
+                    "dnd_count": {"$ifNull": [{"$arrayElemAt": ["$profile_file.dnd_count", 0]}, null]},
+                    "valid_count": {"$ifNull": [{"$arrayElemAt": ["$profile_file.valid_count", 0]}, null]},
+                    "executed": {"$ifNull": [{"$arrayElemAt": ["$profile_file.executed", 0]}, null]},
+                    "pending_count": {"$ifNull": [{"$arrayElemAt": ["$profile_file.pending_count", 0]}, null]}
+                }
+            },
+            {
+                "$project": {
+                    "profile_file": 0
+                }
+            },
+            {
+                "$match": {
+                    "insert_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "tbl_dialer_profile",
+                    "localField": "campaign_id",
+                    "foreignField": "_id",
+                    "pipeline": [
+                        {
+                            "$project": {
+                                "campaign_type": 1
+                            }
+                        }
+                    ],
+                    "as": "campaign_info"
+                }
+            },
+            {
+                "$addFields": {
+                    "campaign_type": {"$ifNull": [{"$arrayElemAt": ["$campaign_info.campaign_type", 0]}, null]}
+                }
+            },
+            {
+                "$project": {
+                    "campaign_info": 0
+                }
+            },
+            {
+                "$sort": {
+                    "table_dialer_profile_files_status": 1,
+                    "table_dialer_profile_files_insert_date_time": -1
+                }
+            },
+            {
+                "$limit": "{{limit}}"
+            }
+        ]
+    },
+    "missed_calls": {
+        "collection": "calling_cdr",
+        "description": "USE THIS for 'missed calls', 'unanswered calls', 'calls not picked up'. Gets INCOMING calls that were missed (abandoned in queue, IVR, agent, non-working hours). This is the PRIMARY query for missed call reports. Do NOT use 'abandoned_calls' for missed calls.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "call_direction": "INCOMING",
+                    "final_status": "abandoned",
+                    "abandoned_reason": {
+                        "$in": [
+                            "abandoned_in_queue",
+                            "abandoned_in_ivr",
+                            "abandoned_in_agent",
+                            "abandoned_non_working_hour",
+                            "abandoned_non_working_day"
+                        ]
+                    },
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "campaign_name": 1,
+                    "campaign_type": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "queue_wait_duration": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "voicemail_duration": 1,
+                    "voicemail_recording_path": 1,
+                    "agent_hangup_cause": 1,
+                    "customer_hangup_cause": 1
+                }
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Campaign Name": "$campaign_name",
+                    "Campaign Type": "$campaign_type",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Queue Wait Duration (Sec)": "$queue_wait_duration",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Voice Mail Duration": "$voicemail_duration",
+                    "Voicemail Recording": "$voicemail_recording_path",
+                    "Agent Hangup Cause": "$agent_hangup_cause",
+                    "Customer Hangup Cause": "$customer_hangup_cause"
+                }
+            }
+        ]
+    },
+    "first_call_resolution": {
+        "collection": "calling_cdr",
+        "description": "Get First Call Resolution (FCR) report - calls where customer's issue was resolved on the first contact (single patched call per customer per day). Uses current date if no dates provided.",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{CURRENT_DATE_START}}",
+            "end_date": "{{CURRENT_DATE_END}}",
+            "sme_id": 0,
+            "skip": 0
+        },
+        "pipeline": [
+            {
+                "$match": {
+                    "sme_id": "{{sme_id}}",
+                    "final_status": "patched",
+                    "start_date_time": {
+                        "$gte": "{{start_date}}",
+                        "$lte": "{{end_date}}"
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "start_date_time": 1,
+                    "session_id": 1,
+                    "longcode": 1,
+                    "campaign_name": 1,
+                    "campaign_type": 1,
+                    "queue_name": 1,
+                    "call_flow_name": 1,
+                    "call_direction": 1,
+                    "customer_number": 1,
+                    "agent_number": 1,
+                    "agent_name": 1,
+                    "agent_ringing_duration": 1,
+                    "customer_ringing_duration": 1,
+                    "on_call_hold_time": 1,
+                    "duration": 1,
+                    "recording_path": 1,
+                    "disposition_form_name": 1,
+                    "disconnected_by": 1,
+                    "customer_feedback": 1,
+                    "remarks": 1
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "day": {"$dayOfYear": "$start_date_time"},
+                        "year": {"$year": "$start_date_time"},
+                        "customer_number": "$customer_number"
+                    },
+                    "count": {"$sum": 1},
+                    "doc": {"$first": "$$ROOT"}
+                }
+            },
+            {
+                "$match": {
+                    "count": 1
+                }
+            },
+            {
+                "$replaceRoot": {"newRoot": "$doc"}
+            },
+            {
+                "$sort": {"start_date_time": -1}
+            },
+            {
+                "$skip": "{{skip}}"
+            },
+            {
+                "$limit": "{{limit}}"
+            },
+            {
+                "$lookup": {
+                    "from": "address_book",
+                    "localField": "customer_number",
+                    "foreignField": "customer_number_primary",
+                    "as": "address_book"
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$address_book",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$project": {
+                    "Date & Time": "$start_date_time",
+                    "Session Id": "$session_id",
+                    "VMN": "$longcode",
+                    "Campaign Name": "$campaign_name",
+                    "Campaign Type": "$campaign_type",
+                    "Queue Name": "$queue_name",
+                    "Call Flow": "$call_flow_name",
+                    "Call Type": "$call_direction",
+                    "Customer Number": "$customer_number",
+                    "Customer Name": "$address_book.customer_name",
+                    "Agent Number": "$agent_number",
+                    "Agent Name": "$agent_name",
+                    "Agent Ring Time": "$agent_ringing_duration",
+                    "Customer Ringing Time": "$customer_ringing_duration",
+                    "Total Hold Time": "$on_call_hold_time",
+                    "Call Duration": "$duration",
+                    "Recording": "$recording_path",
+                    "Disposition": "$disposition_form_name",
+                    "Disconnected By": "$disconnected_by",
+                    "Customer Feedback": "$customer_feedback",
+                    "Remark": "$remarks"
+                }
+            }
+        ]
+    }
+}

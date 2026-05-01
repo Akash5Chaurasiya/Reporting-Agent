@@ -1,0 +1,54 @@
+{
+    "agent_activity": {
+        "description": "Agent Activity Report - Shows agent login times, call durations, break details, and performance metrics",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{START_DATE}}",
+            "end_date": "{{END_DATE}}",
+            "sme_id": 0
+        },
+        "query": "SELECT ROW_NUMBER() OVER (ORDER BY ad.agent_name) AS 'Order Number', ad.agent_name AS 'Agent Name', ad1.agent_name AS 'Team Lead Name', acd.wrap_up_time AS 'Wrap Up Time', ad.agent_id AS 'Agent ID', ad.in_time AS 'In Time', ad.current_call_mode AS 'Current Call Mode', ad.out_time AS 'Out Time', ad.break_status AS 'Break Status', ad.call_status AS 'Call Status', ad.agent_login_type AS 'Login Type', adt.in_time AS 'Shift Start Time', adt.out_time AS 'Shift End Time', DATE(CONVERT_TZ(acd.insert_date, '+0:00', '+5:30')) AS 'Date', COALESCE(SUM(acd.dialer_on_off_duration), 0) AS 'Dialer On Off Duration', COALESCE(SUM(acd.office_hours), 0) AS 'Office Hours', COALESCE(SUM(acd.lunch_hours), 0) AS 'Lunch Hours', COALESCE(SUM(acd.total_number_of_breaks), 0) AS 'Total Number of Breaks', COALESCE(SUM(acd.hold_time), 0) AS 'Total Hold Time', COALESCE(SUM(acd.mute_time), 0) AS 'Total Mute Time', COALESCE(SUM(acd.total_call_duration), 0) AS 'Total Call Duration', 0 AS 'Current Logged Time Sec', 0 AS 'Total Logged In Duration', DATE_FORMAT(lh.first_login_time, '%H:%i:%s') AS 'First Login Time', DATE_FORMAT(lh.last_logout_time, '%H:%i:%s') AS 'Last Logout Time', lh.last_logout_reason AS 'Last Logout Reason' FROM agent_details ad LEFT JOIN agent_details ad1 ON ad1.agent_id = ad.reporting_to LEFT JOIN agent_details_timing adt ON adt.agent_id = ad.agent_id AND adt.days_week = UPPER(DATE_FORMAT(CONVERT_TZ(NOW(), '+0:00', '+5:30'),'%a')) INNER JOIN agent_calling_details acd ON acd.agent_id = ad.agent_id AND acd.insert_date >= CONVERT_TZ('{{start_date}}', '+5:30', '+0:00') AND acd.insert_date < CONVERT_TZ('{{end_date}}', '+5:30', '+0:00') + INTERVAL 1 SECOND LEFT JOIN (SELECT l.agent_id, l.sme_id, MIN(CASE WHEN l.action = 'login' THEN l.insert_date_time END) AS first_login_time, MAX(CASE WHEN l.action = 'logout' THEN l.insert_date_time END) AS last_logout_time, (SELECT l2.message FROM log_history l2 WHERE l2.agent_id = l.agent_id AND l2.sme_id = l.sme_id AND l2.action = 'logout' ORDER BY l2.insert_date_time DESC LIMIT 1) AS last_logout_reason FROM log_history l WHERE l.insert_date_time >= CONVERT_TZ('{{start_date}}', '+5:30', '+0:00') AND l.insert_date_time < CONVERT_TZ('{{end_date}}', '+5:30', '+0:00') + INTERVAL 1 SECOND GROUP BY l.agent_id, l.sme_id) lh ON lh.agent_id = ad.agent_id AND lh.sme_id = ad.sme_id WHERE ({{sme_id}} = 0 OR ad.sme_id = {{sme_id}}) GROUP BY ad.agent_id, ad.agent_name, ad1.agent_name, acd.wrap_up_time, acd.insert_date, ad.in_time, ad.current_call_mode, ad.out_time, ad.break_status, ad.call_status, ad.agent_login_type, adt.in_time, adt.out_time, lh.first_login_time, lh.last_logout_time ORDER BY ad.agent_name, DATE(CONVERT_TZ(acd.insert_date, '+0:00', '+5:30'))"
+    },
+    "agent_status_report": {
+        "description": "Agent Status Report - Real-time agent status with login times, call durations, break details, and performance metrics",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{START_DATE}}",
+            "end_date": "{{END_DATE}}",
+            "sme_id": 0
+        },
+        "query": "SELECT ROW_NUMBER() OVER (ORDER BY ad.agent_name) AS 'Order Number', ad.agent_name AS 'Agent Name', ad1.agent_name AS 'Team Lead Name', acd.wrap_up_time AS 'Wrap Up Time', ad.agent_id AS 'Agent ID', ad.in_time AS 'In Time', ad.current_call_mode AS 'Current Call Mode', ad.out_time AS 'Out Time', ad.break_status AS 'Break Status', ad.call_status AS 'Call Status', ad.agent_login_type AS 'Login Type', adt.in_time AS 'Shift Start Time', adt.out_time AS 'Shift End Time', DATE(CONVERT_TZ(acd.insert_date, '+0:00', '+5:30')) AS 'Date', COALESCE(SUM(acd.dialer_on_off_duration), 0) AS 'Dialer On Off Duration', COALESCE(SUM(acd.office_hours), 0) AS 'Office Hours', COALESCE(SUM(acd.lunch_hours), 0) AS 'Lunch Hours', COALESCE(SUM(acd.total_number_of_breaks), 0) AS 'Total Number of Breaks', COALESCE(SUM(acd.hold_time), 0) AS 'Total Hold Time', COALESCE(SUM(acd.mute_time), 0) AS 'Total Mute Time', COALESCE(SUM(acd.total_call_duration), 0) AS 'Total Call Duration', 0 AS 'Current Logged Time Sec', 0 AS 'Total Logged In Duration', DATE_FORMAT(lh.first_login_time, '%H:%i:%s') AS 'First Login Time', DATE_FORMAT(lh.last_logout_time, '%H:%i:%s') AS 'Last Logout Time', lh.last_logout_reason AS 'Last Logout Reason' FROM agent_details ad LEFT JOIN agent_details ad1 ON ad1.agent_id = ad.reporting_to LEFT JOIN agent_details_timing adt ON adt.agent_id = ad.agent_id AND adt.days_week = UPPER(DATE_FORMAT(CONVERT_TZ(NOW(), '+0:00', '+5:30'),'%a')) INNER JOIN agent_calling_details acd ON acd.agent_id = ad.agent_id AND acd.insert_date >= CONVERT_TZ('{{start_date}}', '+5:30', '+0:00') AND acd.insert_date < CONVERT_TZ('{{end_date}}', '+5:30', '+0:00') + INTERVAL 1 SECOND LEFT JOIN (SELECT l.agent_id, l.sme_id, MIN(CASE WHEN l.action = 'login' THEN l.insert_date_time END) AS first_login_time, MAX(CASE WHEN l.action = 'logout' THEN l.insert_date_time END) AS last_logout_time, (SELECT l2.message FROM log_history l2 WHERE l2.agent_id = l.agent_id AND l2.sme_id = l.sme_id AND l2.action = 'logout' ORDER BY l2.insert_date_time DESC LIMIT 1) AS last_logout_reason FROM log_history l WHERE l.insert_date_time >= CONVERT_TZ('{{start_date}}', '+5:30', '+0:00') AND l.insert_date_time < CONVERT_TZ('{{end_date}}', '+5:30', '+0:00') + INTERVAL 1 SECOND GROUP BY l.agent_id, l.sme_id) lh ON lh.agent_id = ad.agent_id AND lh.sme_id = ad.sme_id WHERE ({{sme_id}} = 0 OR ad.sme_id = {{sme_id}}) GROUP BY ad.agent_id, ad.agent_name, ad1.agent_name, acd.wrap_up_time, acd.insert_date, ad.in_time, ad.current_call_mode, ad.out_time, ad.break_status, ad.call_status, ad.agent_login_type, adt.in_time, adt.out_time, lh.first_login_time, lh.last_logout_time ORDER BY ad.agent_name, DATE(CONVERT_TZ(acd.insert_date, '+0:00', '+5:30'))"
+    },
+    "sms_report": {
+        "description": "SMS Report - Shows SMS triggered by agents with success/failure counts grouped by agent, date, campaign, and type",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{START_DATE}}",
+            "end_date": "{{END_DATE}}",
+            "sme_id": 0
+        },
+        "query": "SELECT agentName AS 'Agent Name', DATE(CONVERT_TZ(dateTime, '+0:00', '+5:30')) AS 'Date', COALESCE(NULLIF(campaign_name, ''), 'N/A') AS 'Campaign Name', COUNT(*) AS 'Total SMS Triggered', SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END) AS 'SMS Submitted Successfully', SUM(CASE WHEN status IS NOT NULL AND (status < 200 OR status >= 300) THEN 1 ELSE 0 END) AS 'SMS Failed to Submit', type AS 'SMS State' FROM smeReport WHERE ({{sme_id}} = 0 OR sme_id = {{sme_id}}) AND dateTime >= CONVERT_TZ('{{start_date}}', '+5:30', '+0:00') AND dateTime < CONVERT_TZ('{{end_date}}', '+5:30', '+0:00') + INTERVAL 1 SECOND GROUP BY agentName, DATE(CONVERT_TZ(dateTime, '+0:00', '+5:30')), campaign_name, type ORDER BY DATE(CONVERT_TZ(dateTime, '+0:00', '+5:30')) DESC, agentName, campaign_name, type"
+    },
+    "whatsapp_report": {
+        "description": "WhatsApp Report - Shows WhatsApp messages triggered by agents with success/failure counts grouped by agent, date, campaign, and type",
+        "use_current_date_default": true,
+        "parameters": {
+            "start_date": "{{START_DATE}}",
+            "end_date": "{{END_DATE}}",
+            "sme_id": 0
+        },
+        "query": "SELECT agentName AS 'Agent Name', DATE(CONVERT_TZ(dateTime, '+0:00', '+5:30')) AS 'Date', COALESCE(NULLIF(campaign_name, ''), 'N/A') AS 'Campaign Name', COUNT(*) AS 'Total WhatsApp Msg Triggered', SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END) AS 'WhatsApp Message Submitted Successfully', SUM(CASE WHEN status IS NOT NULL AND (status < 200 OR status >= 300) THEN 1 ELSE 0 END) AS 'WhatsApp Message Failed to Submit', type AS 'Whatsapp State' FROM whatsAppReport WHERE ({{sme_id}} = 0 OR sme_id = {{sme_id}}) AND dateTime >= CONVERT_TZ('{{start_date}}', '+5:30', '+0:00') AND dateTime < CONVERT_TZ('{{end_date}}', '+5:30', '+0:00') + INTERVAL 1 SECOND GROUP BY agentName, DATE(CONVERT_TZ(dateTime, '+0:00', '+5:30')), campaign_name, type ORDER BY DATE(CONVERT_TZ(dateTime, '+0:00', '+5:30')) DESC, agentName, campaign_name, type"
+    },
+    "agent_call_duration_summary": {
+        "description": "Agent Call Duration Summary - Aggregated total call duration per agent for the entire date range (one row per agent)",
+        "use_current_date_default": false,
+        "parameters": {
+            "start_date": "{{START_DATE}}",
+            "end_date": "{{END_DATE}}",
+            "sme_id": 0,
+            "limit": 100,
+            "sort_order": "DESC"
+        },
+        "query": "SELECT ad.agent_id AS 'Agent ID', ad.agent_name AS 'Agent Name', COALESCE(SUM(acd.total_call_duration), 0) AS 'Total Call Duration Seconds', COUNT(acd.agent_id) AS 'Total Calls' FROM agent_details ad INNER JOIN agent_calling_details acd ON acd.agent_id = ad.agent_id AND acd.insert_date >= CONVERT_TZ('{{start_date}}', '+5:30', '+0:00') AND acd.insert_date < CONVERT_TZ('{{end_date}}', '+5:30', '+0:00') + INTERVAL 1 SECOND WHERE ({{sme_id}} = 0 OR ad.sme_id = {{sme_id}}) GROUP BY ad.agent_id, ad.agent_name ORDER BY SUM(acd.total_call_duration) {{sort_order}}"
+    }
+}
