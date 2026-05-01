@@ -1,0 +1,471 @@
+sources:
+  my-mongodb:
+    kind: mongodb
+    uri: "${MDB_CONNECTION_STRING}"
+
+  my-mariadb:
+    kind: mysql
+    host: "${MYSQL_HOST}"
+    port: 3306
+    user: "${MYSQL_USER}"
+    password: "${MYSQL_PASS}"
+    database: "${MYSQL_DB_NAME}"
+
+tools:
+  find_contact_in_address_book:
+    kind: mongodb-find
+    source: my-mongodb
+    database: ccs_prod
+    collection: address_book
+    description: "Search the address book for customers or contacts. You can search by name, email, or company name."
+    filterPayload: |
+      {
+        "$or": [
+          { "customer_name": { "$regex": {{json .query}}, "$options": "i" } },
+          { "email_id": { "$regex": {{json .query}}, "$options": "i" } },
+          { "company_name": { "$regex": {{json .query}}, "$options": "i" } }
+        ]
+      }
+    projectPayload: |
+      {
+        "customer_name": 1,
+        "email_id": 1,
+        "customer_number_primary": 1,
+        "company_name": 1,
+        "status": 1,
+        "address": 1,
+        "_id": 0
+      }
+    filterParams:
+      - name: query
+        type: string
+        description: "The name, email, or company of the contact to search for."
+    limit: 10
+
+  search_call_logs:
+    kind: mongodb-find
+    source: my-mongodb
+    database: ccs_prod
+    collection: calling_cdr
+    description: "Search call detail records (CDR) by phone number, agent name, or session ID. Useful for finding call history, durations, and recording statuses."
+    filterPayload: |
+      {
+        "$or": [
+          { "customer_number": {{json .query}} },
+          { "agent_number": {{json .query}} },
+          { "agent_name": { "$regex": {{json .query}}, "$options": "i" } },
+          { "session_id": {{json .query}} }
+        ]
+      }
+    projectPayload: |
+      {
+        "session_id": 1,
+        "call_direction": 1,
+        "customer_number": 1,
+        "agent_name": 1,
+        "duration": 1,
+        "start_date_time": 1,
+        "end_date_time": 1,
+        "final_status": 1,
+        "call_recorded_file": 1,
+        "_id": 0
+      }
+    filterParams:
+      - name: query
+        type: string
+        description: "The phone number, agent name, or session ID to search for."
+    limit: 10
+
+  find_calls_by_date:
+    kind: mongodb-find
+    source: my-mongodb
+    database: ccs_prod
+    collection: calling_cdr
+    description: "Find all calls that occurred within a specific time range. Pass dates in ISO format like 2025-01-15T00:00:00Z."
+    filterPayload: |
+      {
+        "start_date_time": {
+          "$gte": { "$date": "{{.start_date}}" },
+          "$lte": { "$date": "{{.end_date}}" }
+        }
+      }
+    filterParams:
+      - name: start_date
+        type: string
+        description: "ISO format start date (e.g. 2025-01-01T00:00:00Z)"
+      - name: end_date
+        type: string
+        description: "ISO format end date (e.g. 2025-12-31T23:59:59Z)"
+    limit: 10
+
+  search_customer_call_history:
+    kind: mongodb-find
+    source: my-mongodb
+    database: ccs_prod
+    collection: customer_cdr
+    description: "Search specific customer call logs using phone numbers or session IDs. Provides details on call connection status and total duration."
+    filterPayload: |
+      {
+        "$or": [
+          { "customer_number": {{json .query}} },
+          { "session_id": {{json .query}} }
+        ]
+      }
+    projectPayload: |
+      {
+        "session_id": 1,
+        "customer_number": 1,
+        "call_info": 1,
+        "call_mode": 1,
+        "connected_duration": 1,
+        "total_duration": 1,
+        "start_date": 1,
+        "end_date": 1,
+        "call_route_reason": 1,
+        "_id": 0
+      }
+    filterParams:
+      - name: query
+        type: string
+        description: "The customer's phone number or the unique session ID."
+    limit: 10
+
+  aggregate_address_book:
+    kind: mongodb-aggregate
+    source: my-mongodb
+    description: >-
+      Executes an aggregation pipeline on the address_book collection (customer contacts).
+      Optionally filter by sme_id — pass the numeric ID as a string (e.g. "10001001") to
+      restrict results to that SME, or omit / leave empty for no SME filter.
+      CRITICAL: The 'pipeline' parameter must contain ONLY the inner stage objects separated
+      by commas — NO outer square brackets [ ]. The tool wraps them automatically.
+      Example pipeline value: {"$match":{"status":"Active"}},{"$count":"total"}
+      The SME $match stage is automatically prepended when sme_id is provided.
+    database: ccs_prod
+    collection: address_book
+    readOnly: true
+    pipelinePayload: |
+      [
+        {{- if .sme_id}}
+        {"$match": {"sme_id": {{.sme_id}}}},
+        {{- end}}
+        {{.pipeline}}
+      ]
+    pipelineParams:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID to scope results (e.g. '10001001'). Leave empty or omit for no SME filter."
+        required: false
+      - name: pipeline
+        type: string
+        description: >-
+          One or more MongoDB aggregation stage objects separated by commas.
+          DO NOT include outer square brackets [ ].
+          Example: {"$match":{"status":"Active"}},{"$group":{"_id":"$company_name","count":{"$sum":1}}}
+
+  aggregate_calling_cdr:
+    kind: mongodb-aggregate
+    source: my-mongodb
+    description: >-
+      Executes an aggregation pipeline on calling_cdr (agent call records).
+      Optionally filter by sme_id — pass the numeric ID as a string (e.g. "10001001") to
+      restrict results to that SME, or omit / leave empty for no SME filter.
+      For date filters use the 'start_date_time' field with $date extended JSON syntax.
+      CRITICAL: The 'pipeline' parameter must contain ONLY the inner stage objects separated
+      by commas — NO outer square brackets [ ]. The tool wraps them automatically.
+      The SME $match stage is automatically prepended when sme_id is provided.
+      If results are unexpectedly empty, use find_calls_by_date first to verify the date format.
+    database: ccs_prod
+    collection: calling_cdr
+    readOnly: true
+    pipelinePayload: |
+      [
+        {{- if .sme_id}}
+        {"$match": {"sme_id": {{.sme_id}}}},
+        {{- end}}
+        {{.pipeline}}
+      ]
+    pipelineParams:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID to scope results (e.g. '10001001'). Leave empty or omit for no SME filter."
+        required: false
+      - name: pipeline
+        type: string
+        description: >-
+          One or more MongoDB aggregation stage objects separated by commas.
+          DO NOT include outer square brackets [ ].
+          Example: {"$match":{"start_date_time":{"$gte":{"$date":"2024-12-21T00:00:00Z"},"$lte":{"$date":"2024-12-21T23:59:59Z"}}}},{"$count":"total_calls"}
+
+  aggregate_customer_cdr:
+    kind: mongodb-aggregate
+    source: my-mongodb
+    description: >-
+      Executes an aggregation pipeline on customer_cdr (customer call duration records).
+      Optionally filter by sme_id — pass the numeric ID as a string (e.g. "10001001") to
+      restrict results to that SME, or omit / leave empty for no SME filter.
+      For date filters use the 'start_date' field (NOT 'start_date_time').
+      CRITICAL: The 'pipeline' parameter must contain ONLY the inner stage objects separated
+      by commas — NO outer square brackets [ ]. The tool wraps them automatically.
+      The SME $match stage is automatically prepended when sme_id is provided.
+    database: ccs_prod
+    collection: customer_cdr
+    readOnly: true
+    pipelinePayload: |
+      [
+        {{- if .sme_id}}
+        {"$match": {"sme_id": {{.sme_id}}}},
+        {{- end}}
+        {{.pipeline}}
+      ]
+    pipelineParams:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID to scope results (e.g. '10001001'). Leave empty or omit for no SME filter."
+        required: false
+      - name: pipeline
+        type: string
+        description: >-
+          One or more MongoDB aggregation stage objects separated by commas.
+          DO NOT include outer square brackets [ ].
+          Example: {"$match":{"start_date":{"$gte":{"$date":"2024-12-21T00:00:00Z"}}}},{"$count":"total"}
+
+  aggregate_customer_followup:
+    kind: mongodb-aggregate
+    source: my-mongodb
+    description: >-
+      Executes an aggregation pipeline on customer_followup (reminders and follow-up tasks).
+      Optionally filter by sme_id — pass the numeric ID as a string (e.g. "10001001") to
+      restrict results to that SME, or omit / leave empty for no SME filter.
+      For date filters use 'reminder_date_time'. Status values: 0=Pending, 1=Completed.
+      CRITICAL: The 'pipeline' parameter must contain ONLY the inner stage objects separated
+      by commas — NO outer square brackets [ ]. The tool wraps them automatically.
+      The SME $match stage is automatically prepended when sme_id is provided.
+    database: ccs_prod
+    collection: customer_followup
+    readOnly: true
+    pipelinePayload: |
+      [
+        {{- if .sme_id}}
+        {"$match": {"sme_id": {{.sme_id}}}},
+        {{- end}}
+        {{.pipeline}}
+      ]
+    pipelineParams:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID to scope results (e.g. '10001001'). Leave empty or omit for no SME filter."
+        required: false
+      - name: pipeline
+        type: string
+        description: >-
+          One or more MongoDB aggregation stage objects separated by commas.
+          DO NOT include outer square brackets [ ].
+          Status: 0=Pending, 1=Completed.
+          Example: {"$match":{"status":0}},{"$group":{"_id":"$customer_name","count":{"$sum":1}}}
+
+  # MariaDB Tools
+  mariadb_execute_sql:
+    kind: mysql-sql
+    source: my-mariadb
+    description: >-
+      LAST RESORT - Only use this when specific tools (get_agent_calling_details, get_agent_details,
+      get_agent_details_timing, get_agent_lunch_details, get_log_history, get_whatsapp_report)
+      cannot fulfill the query. For complex/custom queries only. SME ID filter is automatically applied.
+    statement: |
+      {{.sql}}
+      {{- if .sme_id}}
+      AND sme_id = {{.sme_id}}
+      {{- end}}
+    templateParameters:
+      - name: sql
+        type: string
+        description: "The SQL statement to execute."
+      - name: sme_id
+        type: string
+        description: "SME ID filter is automatically applied."
+        required: false
+
+  mariadb_list_tables:
+    kind: mysql-list-tables
+    source: my-mariadb
+    description: "Retrieve schema information for all or specified tables in the MariaDB database. Can show simple table names or detailed schema information including columns, constraints, and indexes."
+
+  get_agent_calling_details:
+    kind: mysql-sql
+    source: my-mariadb
+    description: >-
+      Use THIS tool when user asks for agent call statistics, call durations, call counts,
+      wrap-up time, hold time, mute time, office hours, lunch hours, break counts, or any
+      agent calling metrics from the agent_calling_details table. Supports optional SME filtering.
+      DO NOT use mariadb_execute_sql for these queries - use this tool instead.
+    statement: |
+      SELECT * FROM agent_calling_details
+      {{- if .sme_id}}
+      WHERE sme_id = {{.sme_id}}
+      {{- end}}
+      ORDER BY insert_date DESC
+      LIMIT 100
+    templateParameters:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID (e.g. '10001001'). Leave empty for all data."
+        required: false
+
+  get_agent_details:
+    kind: mysql-sql
+    source: my-mariadb
+    description: >-
+      Use THIS tool when user asks for agent profile, agent information, agent list,
+      agent mobile number, agent email, agent status (active/inactive), agent login type,
+      webrtc details, or any agent personal information from agent_details table.
+      DO NOT use mariadb_execute_sql for these queries - use this tool instead.
+    statement: |
+      SELECT * FROM agent_details
+      {{- if .sme_id}}
+      WHERE sme_id = {{.sme_id}}
+      {{- end}}
+      ORDER BY insert_time DESC
+      LIMIT 100
+    templateParameters:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID (e.g. '10001001'). Leave empty for all data."
+        required: false
+
+  get_agent_details_timing:
+    kind: mysql-sql
+    source: my-mariadb
+    description: >-
+      Use THIS tool when user asks for agent shift timing, agent work schedule, agent in-time,
+      agent out-time, agent working days, or agent timing schedule from agent_details_timing table.
+      DO NOT use mariadb_execute_sql for these queries - use this tool instead.
+    statement: |
+      SELECT * FROM agent_details_timing
+      {{- if .sme_id}}
+      WHERE sme_id = {{.sme_id}}
+      {{- end}}
+      ORDER BY insert_time DESC
+      LIMIT 100
+    templateParameters:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID (e.g. '10001001'). Leave empty for all data."
+        required: false
+
+  get_agent_lunch_details:
+    kind: mysql-sql
+    source: my-mariadb
+    description: >-
+      Use THIS tool when user asks for agent lunch break, agent break time, agent tea break,
+      or any agent break/lunch details from agent_lunch_details table.
+      DO NOT use mariadb_execute_sql for these queries - use this tool instead.
+    statement: |
+      SELECT * FROM agent_lunch_details
+      {{- if .sme_id}}
+      WHERE sme_id = {{.sme_id}}
+      {{- end}}
+      ORDER BY insert_date DESC, in_time DESC
+      LIMIT 100
+    templateParameters:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID (e.g. '10001001'). Leave empty for all data."
+        required: false
+
+  get_log_history:
+    kind: mysql-sql
+    source: my-mariadb
+    description: >-
+      Use THIS tool when user asks for login history, logout history, agent login time,
+      agent logout time, login logs, or any user activity logs from log_history table.
+      DO NOT use mariadb_execute_sql for these queries - use this tool instead.
+    statement: |
+      SELECT * FROM log_history
+      {{- if .sme_id}}
+      WHERE sme_id = {{.sme_id}}
+      {{- end}}
+      ORDER BY insert_date_time DESC
+      LIMIT 100
+    templateParameters:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID (e.g. '10001001'). Leave empty for all data."
+        required: false
+
+  get_sme_details:
+    kind: mysql-sql
+    source: my-mariadb
+    description: >-
+      ADMIN ONLY - Retrieve SME profile/business details.
+      This tool is restricted to admin users only. Returns SME profiles with business details.
+    statement: |
+      SELECT id, name, email_id, sme_mobile, status, insert_time, update_time,
+             balance, billing_status, plan, subscription, business_legal_name,
+             business_trade_name, city, state, country_code, timezone
+      FROM sme_profile
+      ORDER BY id DESC
+      LIMIT 100
+
+  get_whatsapp_report:
+    kind: mysql-sql
+    source: my-mariadb
+    description: >-
+      Use THIS tool when user asks for WhatsApp messages, WhatsApp report, WhatsApp campaign,
+      WhatsApp status, WhatsApp delivery report, or any WhatsApp communication data.
+      DO NOT use mariadb_execute_sql for these queries - use this tool instead.
+    statement: |
+      SELECT * FROM whatsAppReport
+      {{- if .sme_id}}
+      WHERE sme_id = {{.sme_id}}
+      {{- end}}
+      ORDER BY dateTime DESC
+      LIMIT 100
+    templateParameters:
+      - name: sme_id
+        type: string
+        description: "Optional SME ID (e.g. '10001001'). Leave empty for all data."
+        required: false
+
+
+toolsets:
+  all-tools:
+    - find_contact_in_address_book
+    - search_call_logs
+    - find_calls_by_date
+    - search_customer_call_history
+    - aggregate_address_book
+    - aggregate_calling_cdr
+    - aggregate_customer_cdr
+    - aggregate_customer_followup
+    - mariadb_execute_sql
+    - mariadb_list_tables
+    - get_agent_calling_details
+    - get_agent_details
+    - get_agent_details_timing
+    - get_agent_lunch_details
+    - get_log_history
+    - get_whatsapp_report
+
+  maria-tools:
+    - mariadb_execute_sql
+    - mariadb_list_tables
+    - get_agent_calling_details
+    - get_agent_details
+    - get_agent_details_timing
+    - get_agent_lunch_details
+    - get_log_history
+    - get_whatsapp_report
+
+  mongo-tools:
+    - find_contact_in_address_book
+    - search_call_logs
+    - find_calls_by_date
+    - search_customer_call_history
+    - aggregate_address_book
+    - aggregate_calling_cdr
+    - aggregate_customer_cdr
+    - aggregate_customer_followup
+
+  admin-tools:
+    - get_sme_details

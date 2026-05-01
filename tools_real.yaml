@@ -1,0 +1,240 @@
+sources:
+  my-mongodb:
+    kind: mongodb
+    uri: "${MDB_CONNECTION_STRING}"
+
+  my-mariadb:
+    kind: mysql
+    host: "${MYSQL_HOST}"
+    port: 3306
+    user: "${MYSQL_USER}"
+    password: "${MYSQL_PASS}"
+    database: "${MYSQL_DB_NAME}"
+
+tools:
+  find_contact_in_address_book:
+    kind: mongodb-find
+    source: my-mongodb  # Replace with your actual source name
+    database: ccs_dev   # Replace with your actual database name
+    collection: address_book
+    description: "Search the address book for customers or contacts. You can search by name, email, or company name."
+    # The filter logic searches across three key identity fields
+    filterPayload: |
+      {
+        "$or": [
+          { "customer_name": { "$regex": {{json .query}}, "$options": "i" } },
+          { "email_id": { "$regex": {{json .query}}, "$options": "i" } },
+          { "company_name": { "$regex": {{json .query}}, "$options": "i" } }
+        ]
+      }
+    # Limits the fields returned to keep the context window clean
+    projectPayload: |
+      {
+        "customer_name": 1,
+        "email_id": 1,
+        "customer_number_primary": 1,
+        "company_name": 1,
+        "status": 1,
+        "address": 1,
+        "_id": 0
+      }
+    filterParams:
+      - name: query
+        type: string
+        description: "The name, email, or company of the contact to search for."
+    limit: 10 # Prevents returning too many documents at once
+
+  search_call_logs:
+    kind: mongodb-find
+    source: my-mongodb  # Replace with your actual source name
+    database: ccs_dev   # Replace with your actual database name
+    collection: calling_cdr
+    description: "Search call detail records (CDR) by phone number, agent name, or session ID. Useful for finding call history, durations, and recording statuses."
+    filterPayload: |
+      {
+        "$or": [
+          { "customer_number": {{json .query}} },
+          { "agent_number": {{json .query}} },
+          { "agent_name": { "$regex": {{json .query}}, "$options": "i" } },
+          { "session_id": {{json .query}} }
+        ]
+      }
+    # Projection reduces noise by selecting only the most important call metrics
+    projectPayload: |
+      {
+        "session_id": 1,
+        "call_direction": 1,
+        "customer_number": 1,
+        "agent_name": 1,
+        "duration": 1,
+        "start_date_time": 1,
+        "end_date_time": 1,
+        "final_status": 1,
+        "call_recorded_file": 1,
+        "_id": 0
+      }
+    filterParams:
+      - name: query
+        type: string
+        description: "The phone number, agent name, or session ID to search for."
+    limit: 10
+  
+  find_calls_by_date:
+    kind: mongodb-find
+    source: my-mongodb
+    database: ccs_dev
+    collection: calling_cdr
+    description: "Find all calls that occurred within a specific time range. Pass dates in ISO format like 2025-01-15T00:00:00Z."
+    filterPayload: |
+      {
+        "start_date_time": {
+          "$gte": { "$date": "{{.start_date}}" },
+          "$lte": { "$date": "{{.end_date}}" }
+        }
+      }
+    filterParams:
+      - name: start_date
+        type: string
+        description: "ISO format start date (e.g. 2025-01-01T00:00:00Z)"
+      - name: end_date
+        type: string
+        description: "ISO format end date (e.g. 2025-12-31T23:59:59Z)"
+    limit: 10
+  
+  search_customer_call_history:
+    kind: mongodb-find
+    source: my-mongodb  # Replace with your actual source name
+    database: ccs_dev    # Replace with your actual database name
+    collection: customer_cdr
+    description: "Search specific customer call logs using phone numbers or session IDs. Provides details on call connection status and total duration."
+    filterPayload: |
+      {
+        "$or": [
+          { "customer_number": {{json .query}} },
+          { "session_id": {{json .query}} }
+        ]
+      }
+    # Focused projection to capture the customer experience metrics
+    projectPayload: |
+      {
+        "session_id": 1,
+        "customer_number": 1,
+        "call_info": 1,
+        "call_mode": 1,
+        "connected_duration": 1,
+        "total_duration": 1,
+        "start_date": 1,
+        "end_date": 1,
+        "call_route_reason": 1,
+        "_id": 0
+      }
+    filterParams:
+      - name: query
+        type: string
+        description: "The customer's phone number or the unique session ID."
+    limit: 10
+
+  # Tool 1: Flexible aggregation on first collection
+  aggregate_address_book:
+    kind: mongodb-aggregate
+    source: my-mongodb  # Replace with your source name
+    description: "Executes aggregation pipeline on address_book (customer contacts). After success, store working query in knowledge graph with add_memory for future reuse."
+    database: ccs_dev  # Replace with your database name
+    collection: address_book  # Replace with your first collection name
+    readOnly: true
+    pipelinePayload: "{{.pipeline}}"
+    pipelineParams:
+      - name: pipeline
+        type: string
+        description: "MongoDB aggregation pipeline array. Supports $match, $group, $project, $sort, $limit, etc. Example: [{\"$match\": {\"status\": \"Active\"}}, {\"$group\": {\"_id\": \"$company_name\", \"count\": {\"$sum\": 1}}}]"
+
+  # Tool 2: Flexible aggregation on second collection
+  aggregate_calling_cdr:
+    kind: mongodb-aggregate
+    source: my-mongodb  # Replace with your source name
+    description: "Executes aggregation pipeline on calling_cdr (agent call records). IMPORTANT: For date filters use 'start_date_time' field. If this returns null, use find_calls_by_date to inspect actual data format first, then retry. After success, store working query in knowledge graph with add_memory."
+    database: ccs_dev  # Replace with your database name
+    collection: calling_cdr   # Replace with your second collection name
+    readOnly: true
+    pipelinePayload: "{{.pipeline}}"
+    pipelineParams:
+      - name: pipeline
+        type: string
+        description: "MongoDB aggregation pipeline array. For date filtering use start_date_time field (e.g. {\"$match\": {\"start_date_time\": {\"$gte\": {\"$date\": \"2026-01-01T00:00:00Z\"}}}}). Example: [{\"$match\": {\"status\": \"active\"}}, {\"$group\": {\"_id\": \"$agent_name\", \"count\": {\"$sum\": 1}}}]"
+
+  # Tool 3: Flexible aggregation on third collection
+  aggregate_customer_cdr:
+    kind: mongodb-aggregate
+    source: my-mongodb  # Replace with your source name
+    description: "Executes aggregation pipeline on customer_cdr (customer call duration records). IMPORTANT: For date filters use 'start_date' field. If this returns null, inspect actual data with search_customer_call_history first. After success, store working query in knowledge graph with add_memory."
+    database: ccs_dev  # Replace with your database name
+    collection: customer_cdr  # Replace with your third collection name
+    readOnly: true
+    pipelinePayload: "{{.pipeline}}"
+    pipelineParams:
+      - name: pipeline
+        type: string
+        description: "MongoDB aggregation pipeline array. For date filtering use start_date field (e.g. {\"$match\": {\"start_date\": {\"$gte\": {\"$date\": \"2026-01-01T00:00:00Z\"}}}}). Supports $match, $group, $project, $sort, etc."
+
+  # Tool 4: Flexible aggregation on fourth collection
+  aggregate_customer_followup:
+    kind: mongodb-aggregate
+    source: my-mongodb  # Replace with your source name
+    description: "Executes aggregation pipeline on customer_followup (reminders and tasks). For date filters use 'reminder_date_time'. After success, store working query in knowledge graph with add_memory."
+    database: ccs_dev  # Replace with your database name
+    collection: customer_followup  # Replace with your fourth collection name
+    readOnly: true
+    pipelinePayload: "{{.pipeline}}"
+    pipelineParams:
+      - name: pipeline
+        type: string
+        description: "MongoDB aggregation pipeline array. Status: 0=Pending, 1=Completed. Example: [{\"$match\": {\"status\": 0}}, {\"$group\": {\"_id\": \"$customer_name\", \"count\": {\"$sum\": 1}}}]"
+
+  # MariaDB Tools
+  mariadb_execute_sql:
+    kind: mysql-execute-sql
+    source: my-mariadb
+    description: "Execute SQL statements against the MariaDB database. Supports SELECT, INSERT, UPDATE, DELETE, and other SQL operations."
+
+  mariadb_list_tables:
+    kind: mysql-list-tables
+    source: my-mariadb
+    description: "Retrieve schema information for all or specified tables in the MariaDB database. Can show simple table names or detailed schema information including columns, constraints, and indexes."
+
+  mariadb_get_query_plan:
+    kind: mysql-get-query-plan
+    source: my-mariadb
+    description: "Get the execution plan for a SQL query to help optimize performance and understand how MariaDB will execute the statement."
+
+  mariadb_list_active_queries:
+    kind: mysql-list-active-queries
+    source: my-mariadb
+    description: "List currently running queries in the MariaDB database to monitor active operations and identify long-running queries."
+
+  mariadb_list_table_fragmentation:
+    kind: mysql-list-table-fragmentation
+    source: my-mariadb
+    description: "List fragmented tables in MariaDB to identify tables that need optimization. Shows top N fragmented tables by data and index fragmentation."
+
+  mariadb_list_tables_missing_indexes:
+    kind: mysql-list-tables-missing-unique-indexes
+    source: my-mariadb
+    description: "List tables that do not have primary or unique indexes in the MariaDB database. Useful for identifying potential performance issues and data integrity problems."
+
+
+toolsets:
+  standard-db-tools:
+    - find_contact_in_address_book
+    - search_call_logs
+    - find_calls_by_date
+    - search_customer_call_history
+    - aggregate_address_book
+    - aggregate_calling_cdr
+    - aggregate_customer_cdr
+    - aggregate_customer_followup
+    - mariadb_execute_sql
+    - mariadb_list_tables
+    - mariadb_get_query_plan
+    - mariadb_list_active_queries
+    - mariadb_list_table_fragmentation
+    - mariadb_list_tables_missing_indexes
