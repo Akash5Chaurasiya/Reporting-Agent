@@ -3,13 +3,6 @@ sources:
     kind: mongodb
     uri: "${MDB_CONNECTION_STRING}"
 
-  my-mariadb:
-    kind: mysql
-    host: "${MYSQL_HOST}"
-    port: 3306
-    user: "${MYSQL_USER}"
-    password: "${MYSQL_PASS}"
-    database: "${MYSQL_DB_NAME}"
 
 tools:
   find_contact_in_address_book:
@@ -190,38 +183,6 @@ tools:
         type: string
         description: "MongoDB aggregation pipeline array. Status: 0=Pending, 1=Completed. Example: [{\"$match\": {\"status\": 0}}, {\"$group\": {\"_id\": \"$customer_name\", \"count\": {\"$sum\": 1}}}]"
 
-  # MariaDB Tools
-  mariadb_execute_sql:
-    kind: mysql-execute-sql
-    source: my-mariadb
-    description: "Execute SQL statements against the MariaDB database. Supports SELECT, INSERT, UPDATE, DELETE, and other SQL operations."
-
-  mariadb_list_tables:
-    kind: mysql-list-tables
-    source: my-mariadb
-    description: "Retrieve schema information for all or specified tables in the MariaDB database. Can show simple table names or detailed schema information including columns, constraints, and indexes."
-
-  mariadb_get_query_plan:
-    kind: mysql-get-query-plan
-    source: my-mariadb
-    description: "Get the execution plan for a SQL query to help optimize performance and understand how MariaDB will execute the statement."
-
-  mariadb_list_active_queries:
-    kind: mysql-list-active-queries
-    source: my-mariadb
-    description: "List currently running queries in the MariaDB database to monitor active operations and identify long-running queries."
-
-  mariadb_list_table_fragmentation:
-    kind: mysql-list-table-fragmentation
-    source: my-mariadb
-    description: "List fragmented tables in MariaDB to identify tables that need optimization. Shows top N fragmented tables by data and index fragmentation."
-
-  mariadb_list_tables_missing_indexes:
-    kind: mysql-list-tables-missing-unique-indexes
-    source: my-mariadb
-    description: "List tables that do not have primary or unique indexes in the MariaDB database. Useful for identifying potential performance issues and data integrity problems."
-
-
 toolsets:
   standard-db-tools:
     - find_contact_in_address_book
@@ -232,9 +193,3 @@ toolsets:
     - aggregate_calling_cdr
     - aggregate_customer_cdr
     - aggregate_customer_followup
-    - mariadb_execute_sql
-    - mariadb_list_tables
-    - mariadb_get_query_plan
-    - mariadb_list_active_queries
-    - mariadb_list_table_fragmentation
-    - mariadb_list_tables_missing_indexes

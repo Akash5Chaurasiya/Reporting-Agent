@@ -70,15 +70,7 @@ if langfuse:
 TOOLBOX_URL = os.getenv("TOOLBOX_URL", "http://127.0.0.1:5000")
 toolbox_client = ToolboxSyncClient(TOOLBOX_URL)
 
-# Bound params are hidden from the model - values are injected at tool execution time
-# The callable is invoked within the request context where SME ID is available
-def get_sme_id_bound():
-    """Get SME ID for bound_params - called at tool execution time."""
-    sme_id = get_current_sme_id()
-    if sme_id is None:
-        return None
-    return str(sme_id)  # Convert to string - toolbox expects string type
+# Bound params are hidden from the model - values can be injected at tool execution time if a tool requires them.
+# The current default toolset does not expose a matching sme_id parameter, so load_toolset must be called without bound_params.
 
-toolbox_tools = toolbox_client.load_toolset(
-    bound_params={"sme_id": get_sme_id_bound}
-)
+toolbox_tools = toolbox_client.load_toolset()

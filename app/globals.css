@@ -10,9 +10,9 @@
 }
 
 :root {
-  /* Azalio Brand Colors */
-  --azalio-primary: #1e1b4b;
-  --azalio-accent: #14b8a6;
+  /*  Brand Colors */
+  ---primary: #1e1b4b;
+  ---accent: #14b8a6;
 
   --copilot-kit-primary-color: #1e1b4b;
   --copilot-kit-contrast-color: white;
@@ -67,9 +67,9 @@
 }
 
 .dark {
-  /* Azalio Brand Colors - Dark Mode */
-  --azalio-primary: #4338ca;
-  --azalio-accent: #2dd4bf;
+  /*  Brand Colors - Dark Mode */
+  ---primary: #4338ca;
+  ---accent: #2dd4bf;
 
   --copilot-kit-primary-color: #4338ca;
   --copilot-kit-contrast-color: white;

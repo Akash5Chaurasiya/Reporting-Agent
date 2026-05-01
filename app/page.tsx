@@ -786,9 +786,9 @@ function HomeContent() {
         instructions={prompt}
         AssistantMessage={CustomAssistantMessage}
         labels={{
-          title: "Azalio Assistant",
+          title: " Assistant",
           initial:
-            "Hello! I'm your Azalio call center reporting assistant. Ask me about call metrics, agent performance, customer insights, or generate reports.",
+            "Hello! I'm your  call center reporting assistant. Ask me about call metrics, agent performance, customer insights, or generate reports.",
           placeholder: "Ask about calls, agents, or metrics...",
         }}
       >

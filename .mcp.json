@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "copilotkit-mcp": {
+      "type": "sse",
+      "url": "https://mcp.copilotkit.ai/sse"
+    },
+    "database-toolbox":{
+      "type":"http",
+      "url":"http://127.0.0.1:5000/mcp"
+    },
+      "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--headless=false",
+        "--isolated=true",
+        "--acceptInsecureCerts",
+        "--categoryEmulation=false",
+        "--categoryPerformance=false"
+      ]
+    }
+  }
+}

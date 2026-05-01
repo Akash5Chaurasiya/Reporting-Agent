@@ -39,7 +39,7 @@ export function SidebarUserProfile() {
           <div className="w-8 h-8 rounded-full ring-2 ring-offset-2 ring-offset-background ring-default flex items-center justify-center overflow-hidden bg-white">
             <img
               src="/azalio_logo.png"
-              alt="Azalio"
+              alt=""
               className="w-6 h-6 object-contain"
             />
           </div>

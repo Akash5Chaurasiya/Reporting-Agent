@@ -14,7 +14,7 @@ export function Header({ dateRange, onDateRangeChange }: HeaderProps) {
       <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-teal-500 bg-clip-text text-transparent">Azalio</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-teal-500 bg-clip-text text-transparent"></span>
           </div>
           <div>
             <h1 className="text-2xl font-medium text-gray-900">Call Center</h1>

@@ -18,7 +18,7 @@ const loginSchema = z.object({
     .min(1, 'SME ID is required')
     .refine(
       (val) => isValidSmeIdFormat(val),
-      'Invalid SME ID format. Use numeric ID (e.g., 10001001) or email (e.g., admin@azalio.io)'
+      'Invalid SME ID format. Use numeric ID (e.g., 10001001) or email (e.g., admin@.io)'
     ),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
@@ -66,11 +66,11 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-slate-200 mb-4 shadow-lg">
             <img
               src="/azalio_logo.png"
-              alt="Azalio"
+              alt=""
               className="w-10 h-10 object-contain"
             />
           </div>
-          <h1 className="text-2xl font-bold text-[#1e1b4b]">Azalio</h1>
+          <h1 className="text-2xl font-bold text-[#1e1b4b]"></h1>
           <p className="text-slate-500 mt-1">Call Center Assistant</p>
         </div>
 
@@ -184,7 +184,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-sm text-slate-400 mt-8">
-          &copy; {new Date().getFullYear()} Azalio. All rights reserved.
+          &copy; {new Date().getFullYear()} . All rights reserved.
         </p>
       </div>
     </div>

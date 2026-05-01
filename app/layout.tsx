@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Azalio Call Center Assistant",
-  description: "AI-powered call center analytics and reporting for Azalio Web Technologies",
+  title: "Call Center Assistant",
+  description: "AI-powered call center analytics and reporting for  Web Technologies",
 };
 
 export default function RootLayout({

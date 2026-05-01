@@ -54,14 +54,14 @@ export function Sidebar() {
               {/* Header - Logo Area */}
               <div className="h-16 flex items-center px-3 border-b border-sidebar-border">
                 <a
-                  href="https://www.azalio.io/"
+                  href="https://www..io/"
                   className={cn(
                     "flex items-center",
                     "no-underline hover:opacity-hover",
                     "transition-opacity duration-150"
                   )}
                 >
-                  <span className="text-xl font-bold text-primary">Azalio</span>
+                  <span className="text-xl font-bold text-primary"></span>
                   <span className="text-xl font-light text-foreground ml-1">
                     Assistant
                   </span>

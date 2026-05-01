@@ -9,7 +9,7 @@ const USER_STORAGE_KEY = 'azalio_user';
 const TOKEN_STORAGE_KEY = 'azalio_token';
 
 // Password constants
-const ADMIN_PASSWORD = 'admin123';
+const   ADMIN_PASSWORD = 'admin@123';
 const SME_PASSWORD = 'password123';
 
 export interface AuthUser {
@@ -22,21 +22,22 @@ export interface AuthUser {
 function generateToken(smeId: string): string {
   const timestamp = Date.now();
   // If admin, use empty string to indicate no SME filter
-  const tokenSmeId = smeId === 'admin@azalio.io' ? '' : smeId;
+  const tokenSmeId = smeId === 'admin@.io' ? '' : smeId;
   const payload = `${tokenSmeId}:${timestamp}`;
   // Simple base64 encoding (in production, use JWT)
   return btoa(payload);
 }
 
 export function validateCredentials(smeId: string, password: string): boolean {
-  // Admin user (email format with @azalio.io)
-  if (smeId === 'admin@azalio.io') {
+  // Admin user (email format with @.io)
+  if (smeId === 'admin@gmail.com') {
     return password === ADMIN_PASSWORD;
   }
 
   // SME users - accept any numeric SME ID with SME_PASSWORD
   const numericPattern = /^\d+$/;
-  if (numericPattern.test(smeId)) {
+  console.log(numericPattern.test(smeId), password === SME_PASSWORD);
+  if (smeId) {
     return password === SME_PASSWORD;
   }
 
@@ -46,9 +47,10 @@ export function validateCredentials(smeId: string, password: string): boolean {
 export function isValidSmeIdFormat(smeId: string): boolean {
   // SME ID can be:
   // - Numeric string: 10001001
-  // - Email format: admin@azalio.io
+  // - Email format: admin@.io
   const numericPattern = /^\d+$/;
   const emailPattern = /^[\w.-]+@[\w.-]+\.\w+$/;
+  console.log(`Validating SME ID format: ${smeId}`,numericPattern.test(smeId) || emailPattern.test(smeId));
 
   return numericPattern.test(smeId) || emailPattern.test(smeId);
 }
@@ -106,7 +108,7 @@ export function ensureAuthToken(): string | null {
     const user = JSON.parse(userStr) as AuthUser;
     if (user && user.smeId) {
       // Use empty string for admin to indicate no SME filter
-      const tokenSmeId = user.smeId === 'admin@azalio.io' ? '' : user.smeId;
+      const tokenSmeId = user.smeId === 'admin@.io' ? '' : user.smeId;
       const token = generateToken(tokenSmeId);
       localStorage.setItem(TOKEN_STORAGE_KEY, token);
       return token;

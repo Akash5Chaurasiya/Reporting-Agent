@@ -75,7 +75,7 @@ export const chatHistory: ChatHistoryItem[] = [
 // Mock user profile data
 export const currentUser: UserProfile = {
   name: "Nitin 123",
-  email: "nitin@azalio.io",
+  email: "nitin@.io",
   avatar: "https://images.pexels.com/photos/2589653/pexels-photo-2589653.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
   notificationCount: undefined, // TODO: Enable when notifications are implemented
 };
